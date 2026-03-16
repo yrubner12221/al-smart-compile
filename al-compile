@@ -279,7 +279,7 @@ CLAUDECODECOP="$ANALYZER_DIR/BusinessCentral.ClaudeCodeCop.dll"
 
 # ALCops analyzers (from NuGet package)
 ALCOPS_BASE="$HOME/.nuget/packages/alcops.analyzers"
-ALCOPS_VERSION=$(ls "$ALCOPS_BASE" 2>/dev/null | sort -V | tail -1)
+ALCOPS_VERSION=$(ls "$ALCOPS_BASE" 2>/dev/null | sort -V | tail -1 || true)
 ALCOPS_DIR="$ALCOPS_BASE/$ALCOPS_VERSION/lib/netstandard2.1"
 if $VERBOSE && [[ -n "$ALCOPS_VERSION" ]]; then
     info "ALCops: $ALCOPS_VERSION ($ALCOPS_DIR)"
