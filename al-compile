@@ -277,13 +277,21 @@ APPSOURCE="$ANALYZER_DIR/Microsoft.Dynamics.Nav.AppSourceCop.dll"
 TESTQUALITYCOP="$ANALYZER_DIR/BusinessCentral.TestQualityCop.dll"
 CLAUDECODECOP="$ANALYZER_DIR/BusinessCentral.ClaudeCodeCop.dll"
 
-# ALCops analyzers (from NuGet package)
-ALCOPS_BASE="$HOME/.nuget/packages/alcops.analyzers"
-ALCOPS_VERSION=$(ls "$ALCOPS_BASE" 2>/dev/null | sort -V | tail -1 || true)
-ALCOPS_DIR="$ALCOPS_BASE/$ALCOPS_VERSION/lib/netstandard2.1"
-if $VERBOSE && [[ -n "$ALCOPS_VERSION" ]]; then
-    info "ALCops: $ALCOPS_VERSION ($ALCOPS_DIR)"
+# ALCops analyzers — resolve from two possible locations:
+#   1. AL Language extension's bin/Analyzers/ (installed by the ALCops VS Code extension)
+#   2. ~/.nuget/packages/alcops.analyzers/ (installed manually via NuGet)
+if [[ -f "$ANALYZER_DIR/ALCops.LinterCop.dll" ]]; then
+    ALCOPS_DIR="$ANALYZER_DIR"
+else
+    ALCOPS_NUGET_BASE="$HOME/.nuget/packages/alcops.analyzers"
+    ALCOPS_NUGET_VERSION=$(ls "$ALCOPS_NUGET_BASE" 2>/dev/null | sort -V | tail -1 || true)
+    ALCOPS_DIR="$ALCOPS_NUGET_BASE/$ALCOPS_NUGET_VERSION/lib/netstandard2.1"
 fi
+
+if $VERBOSE && [[ -f "$ALCOPS_DIR/ALCops.LinterCop.dll" ]]; then
+    info "ALCops: $ALCOPS_DIR"
+fi
+
 ALCOPS_COMMON="$ALCOPS_DIR/ALCops.Common.dll"
 ALCOPS_LINTERCOP="$ALCOPS_DIR/ALCops.LinterCop.dll"
 ALCOPS_APPLICATIONCOP="$ALCOPS_DIR/ALCops.ApplicationCop.dll"
@@ -292,12 +300,14 @@ ALCOPS_PLATFORMCOP="$ALCOPS_DIR/ALCops.PlatformCop.dll"
 ALCOPS_DOCUMENTATIONCOP="$ALCOPS_DIR/ALCops.DocumentationCop.dll"
 ALCOPS_TESTAUTOMATIONCOP="$ALCOPS_DIR/ALCops.TestAutomationCop.dll"
 
-# Validate ALCops installation when it will be used (default/all modes only)
-if [[ "$ANALYZERS" == "default" || "$ANALYZERS" == "all" ]] && [[ -z "$ALCOPS_VERSION" || ! -f "$ALCOPS_LINTERCOP" ]]; then
+# Validate ALCops availability when it will be used (default/all modes only)
+if [[ "$ANALYZERS" == "default" || "$ANALYZERS" == "all" ]] && [[ ! -f "$ALCOPS_LINTERCOP" ]]; then
     echo
-    error "ALCops analyzers not found in ~/.nuget/packages/alcops.analyzers/"
-    warning "Install the ALCops VS Code extension (arthurvdv.alcops) — it manages the DLLs automatically"
-    warning "Or download manually from: https://www.nuget.org/packages/ALCops.Analyzers"
+    error "ALCops analyzers not found in either of:"
+    error "  - ${ANALYZER_DIR} (AL extension Analyzers folder)"
+    error "  - ${HOME}/.nuget/packages/alcops.analyzers/ (NuGet)"
+    warning "Option 1: Install the ALCops VS Code extension (arthurvdv.alcops) and run 'ALCops: Install' in VS Code"
+    warning "Option 2: Download manually from: https://www.nuget.org/packages/ALCops.Analyzers"
     warning "To skip ALCops: al-compile --analyzers none"
     echo
     exit 1
